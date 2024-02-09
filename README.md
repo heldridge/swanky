@@ -12,6 +12,10 @@
 * `scuttlebutt`: Core primitives used by other `swanky` crates.
 * `simple-arith-circuit`: Simple flat arithmetic circuit representation.
 
+
+**2024-02-09** Projection gates in arithmetic garbled circuits have [a proven security vulnerability](https://github.com/defund/ctf/tree/master/dicectf-quals-2024/dicenet/solve) in their design. The issue affects the fancy-garbling library and its dependencies (including popsicle).
+We are currently investigating the impact this bug has on Arithmetic Garbling (CRT) in swanky.
+
 # A note on security
 
 `swanky` is currently considered **prototype** software. Do not deploy it in
