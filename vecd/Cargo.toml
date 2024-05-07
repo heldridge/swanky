@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 fancy-garbling.workspace = true
+serde = { workspace = true, features = ["derive"], optional = false }
+serde_json = { workspace = true, optional = false }

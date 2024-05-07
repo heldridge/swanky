@@ -6,6 +6,8 @@ use std::env;
 use std::fs::File;
 use std::io::BufReader;
 
+use serde_json;
+
 fn circuit(fname: &str) -> BinaryCircuit {
     BinaryCircuit::parse(BufReader::new(File::open(fname).unwrap())).unwrap()
 }
@@ -33,7 +35,8 @@ fn garble_circuit(circ: &mut BinaryCircuit, gb_inputs: Vec<u16>) {
     }
     println!("");
 
-    dbg!(gc);
+    let serialized = serde_json::to_string(&gc).unwrap();
+    println!("{}", serialized);
 }
 
 fn main() {
@@ -50,7 +53,7 @@ fn main() {
 
                 garble_circuit(&mut circ, gb_inputs);
             } else {
-                println!("Must provide an ell")
+                println!("Must provide a circuit path")
             }
         } else if directive == "evaluate" {
             println!("Evaluating");

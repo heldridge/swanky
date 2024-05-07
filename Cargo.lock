@@ -2982,6 +2982,8 @@ name = "vecd"
 version = "0.1.0"
 dependencies = [
  "fancy-garbling",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
