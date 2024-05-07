@@ -1,6 +1,6 @@
 use fancy_garbling::circuit::BinaryCircuit;
 use fancy_garbling::classic::garble;
-use fancy_garbling::{WireLabel, WireMod2};
+use fancy_garbling::WireMod2;
 
 use std::env;
 use std::fs::File;
@@ -16,27 +16,13 @@ fn garble_circuit(circ: &mut BinaryCircuit, gb_inputs: Vec<u16>) {
     let (enc, gc) = garble::<WireMod2, _>(circ).unwrap();
 
     let garbler_inputs = enc.encode_garbler_inputs(&gb_inputs);
+    let evaluator_zero_inputs = enc.encode_evaluator_inputs(&vec![0; 2]);
+    let evaluator_one_inputs = enc.encode_evaluator_inputs(&vec![1; 2]);
 
-    let encoder_zero_inputs = enc.encode_evaluator_inputs(&vec![0; 2]);
-    let encoder_one_inputs = enc.encode_evaluator_inputs(&vec![1; 2]);
-
-    for gi in garbler_inputs.iter() {
-        print!("{} ", gi.as_block());
-    }
-
-    println!("");
-    for ei_z in encoder_zero_inputs.iter() {
-        print!("{} ", ei_z.as_block());
-    }
-
-    println!("");
-    for ei_o in encoder_one_inputs.iter() {
-        print!("{} ", ei_o.as_block());
-    }
-    println!("");
-
-    let serialized = serde_json::to_string(&gc).unwrap();
-    println!("{}", serialized);
+    println!("{}", serde_json::to_string(&garbler_inputs).unwrap());
+    println!("{}", serde_json::to_string(&evaluator_zero_inputs).unwrap());
+    println!("{}", serde_json::to_string(&evaluator_one_inputs).unwrap());
+    println!("{}", serde_json::to_string(&gc).unwrap());
 }
 
 fn main() {
