@@ -1,95 +1,45 @@
-use fancy_garbling::circuit::{BinaryCircuit as Circuit, EvaluableCircuit};
-use fancy_garbling::{Evaluator, Garbler, WireMod2};
-use scuttlebutt::{AesRng, SymChannel};
+use fancy_garbling::circuit::BinaryCircuit;
+use fancy_garbling::classic::garble;
+use fancy_garbling::{WireLabel, WireMod2};
 
 use std::env;
 use std::fs::File;
-use std::io::{self, BufReader, Read, Write};
-use std::sync::{Arc, Mutex};
+use std::io::BufReader;
 
-#[derive(Debug)]
-struct SharedData {
-    data: Arc<Mutex<Vec<u8>>>,
+fn circuit(fname: &str) -> BinaryCircuit {
+    BinaryCircuit::parse(BufReader::new(File::open(fname).unwrap())).unwrap()
 }
 
-impl SharedData {
-    fn new(data: Arc<Mutex<Vec<u8>>>) -> Self {
-        SharedData { data }
+fn run_circuit(circ: &mut BinaryCircuit, gb_inputs: Vec<u16>) {
+    let (enc, _gc) = garble::<WireMod2, _>(circ).unwrap();
+
+    let garbler_inputs = enc.encode_garbler_inputs(&gb_inputs);
+
+    let encoder_zero_inputs = enc.encode_evaluator_inputs(&vec![0; 2]);
+    let encoder_one_inputs = enc.encode_evaluator_inputs(&vec![1; 2]);
+
+    for gi in garbler_inputs.iter() {
+        print!("{} ", gi.as_block());
     }
 
-    fn read_inner(&self, buf: &mut [u8]) -> io::Result<usize> {
-        self.data.lock().unwrap().as_slice().read(buf)
+    println!("");
+    for ei_z in encoder_zero_inputs.iter() {
+        print!("{} ", ei_z.as_block());
     }
 
-    fn write_inner(&self, buf: &[u8]) -> io::Result<usize> {
-        self.data.lock().unwrap().write(buf)
+    println!("");
+    for ei_o in encoder_one_inputs.iter() {
+        print!("{} ", ei_o.as_block());
     }
-
-    fn flush_inner(&self) -> io::Result<()> {
-        self.data.lock().unwrap().flush()
-    }
-}
-
-impl Read for SharedData {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        println!("READING!!");
-        self.read_inner(buf)
-    }
-}
-
-impl Write for SharedData {
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        println!("WRITING!!!");
-        self.write_inner(buf)
-    }
-
-    fn flush(&mut self) -> io::Result<()> {
-        self.flush_inner()
-    }
-}
-
-fn circuit(fname: &str) -> Circuit {
-    println!("* Circuit {}", fname);
-    Circuit::parse(BufReader::new(File::open(fname).unwrap())).unwrap()
-}
-
-fn run_circuit(circ: &mut Circuit, gb_inputs: Vec<u16>, _ev_inputs: Vec<u16>) {
-    let rng = AesRng::new();
-
-    // dbg!(circ);
-
-    let sd = Arc::new(Mutex::new(Vec::new()));
-    let garbler_data = SharedData::new(sd.clone());
-    let evaluator_data = SharedData::new(sd.clone());
-
-    let s_garb = SymChannel::new(garbler_data);
-    let s_eval = SymChannel::new(evaluator_data);
-
-    let mut gb = Garbler::<SymChannel<SharedData>, AesRng, WireMod2>::new(s_garb, rng);
-
-    let n_gb_inputs = gb_inputs.len();
-    // let n_ev_inputs = ev_inputs.len();
-
-    let (a, b) = gb
-        .encode_many_wires(&gb_inputs, &vec![2; n_gb_inputs])
-        .unwrap();
-
-    let _res = circ.eval(&mut gb, &a, &[]).unwrap();
-
-    // let mut ev = Evaluator::<SymChannel<SharedData>, WireMod2>::new(s_eval);
-    // let res = circ.eval(&mut ev, &a, &[]).unwrap();
-    // dbg!(res);
+    println!("");
 }
 
 fn main() {
-    println!("Start");
-
     let args: Vec<String> = env::args().collect();
     let circuit_file_name = &args[1];
 
-    let gb_inputs: Vec<u16> = vec![0; 1];
-    let ev_inputs: Vec<u16> = vec![0; 1];
+    let gb_inputs: Vec<u16> = vec![1; 2];
     let mut circ = circuit(circuit_file_name);
 
-    run_circuit(&mut circ, gb_inputs, ev_inputs);
+    run_circuit(&mut circ, gb_inputs);
 }
