@@ -10,8 +10,8 @@ fn circuit(fname: &str) -> BinaryCircuit {
     BinaryCircuit::parse(BufReader::new(File::open(fname).unwrap())).unwrap()
 }
 
-fn run_circuit(circ: &mut BinaryCircuit, gb_inputs: Vec<u16>) {
-    let (enc, _gc) = garble::<WireMod2, _>(circ).unwrap();
+fn garble_circuit(circ: &mut BinaryCircuit, gb_inputs: Vec<u16>) {
+    let (enc, gc) = garble::<WireMod2, _>(circ).unwrap();
 
     let garbler_inputs = enc.encode_garbler_inputs(&gb_inputs);
 
@@ -32,14 +32,30 @@ fn run_circuit(circ: &mut BinaryCircuit, gb_inputs: Vec<u16>) {
         print!("{} ", ei_o.as_block());
     }
     println!("");
+
+    dbg!(gc);
 }
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let circuit_file_name = &args[1];
+    if let Some(directive) = args.get(1) {
+        if directive == "garble" {
+            if let Some(circuit_path) = args.get(2) {
+                let mut circ = circuit(&circuit_path);
 
-    let gb_inputs: Vec<u16> = vec![1; 2];
-    let mut circ = circuit(circuit_file_name);
+                let gb_inputs: Vec<u16> = args[3..]
+                    .iter()
+                    .map(|s| s.parse::<u16>().unwrap())
+                    .collect();
 
-    run_circuit(&mut circ, gb_inputs);
+                garble_circuit(&mut circ, gb_inputs);
+            } else {
+                println!("Must provide an ell")
+            }
+        } else if directive == "evaluate" {
+            println!("Evaluating");
+        } else {
+            println!("Neither");
+        }
+    }
 }
