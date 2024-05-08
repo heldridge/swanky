@@ -28,6 +28,9 @@ fn garble_circuit(circ: &mut BinaryCircuit, gb_inputs: Vec<u16>) {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
+
+    // TODO: Improve CLI processing
+
     if let Some(directive) = args.get(1) {
         if directive == "garble" {
             if let Some(circuit_path) = args.get(2) {
