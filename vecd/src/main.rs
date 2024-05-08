@@ -1,10 +1,10 @@
 use fancy_garbling::circuit::BinaryCircuit;
-use fancy_garbling::classic::garble;
+use fancy_garbling::classic::{garble, GarbledCircuit};
 use fancy_garbling::WireMod2;
 
-use std::env;
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufRead, BufReader};
+use std::{env, io};
 
 use serde_json;
 
@@ -43,7 +43,39 @@ fn main() {
                 println!("Must provide a circuit path")
             }
         } else if directive == "evaluate" {
-            println!("Evaluating");
+            if let Some(circuit_path) = args.get(2) {
+                let circ = circuit(&circuit_path);
+
+                let ell = args.get(3).unwrap().parse::<usize>().unwrap();
+                let input_data_path = args.get(4).unwrap();
+
+                let file = File::open(input_data_path).unwrap();
+                let reader = io::BufReader::new(file);
+
+                let mut gb_inputs: Vec<WireMod2> = Vec::new();
+                let mut ev_inputs: Vec<WireMod2> = Vec::new();
+
+                for (index, line) in reader.lines().enumerate() {
+                    match line {
+                        Ok(line_content) => {
+                            if index < ell {
+                                gb_inputs.push(serde_json::from_str(&line_content).unwrap());
+                            } else if index < 2 * ell {
+                                ev_inputs.push(serde_json::from_str(&line_content).unwrap());
+                            } else {
+                                let gc: GarbledCircuit<WireMod2, BinaryCircuit> =
+                                    serde_json::from_str(&line_content).unwrap();
+
+                                let res = gc.eval(&circ, &gb_inputs, &ev_inputs).unwrap()[0];
+                                println!("{}", res)
+                            }
+                        }
+                        Err(_err) => panic!("Failed to read line"),
+                    }
+                }
+            } else {
+                println!("Must provide a circuit path")
+            }
         } else {
             println!("Neither");
         }
