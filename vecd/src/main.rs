@@ -14,10 +14,11 @@ fn circuit(fname: &str) -> BinaryCircuit {
 
 fn garble_circuit(circ: &mut BinaryCircuit, gb_inputs: Vec<u16>) {
     let (enc, gc) = garble::<WireMod2, _>(circ).unwrap();
+    let num_inputs = gb_inputs.len();
 
     let garbler_inputs = enc.encode_garbler_inputs(&gb_inputs);
-    let evaluator_zero_inputs = enc.encode_evaluator_inputs(&vec![0; 2]);
-    let evaluator_one_inputs = enc.encode_evaluator_inputs(&vec![1; 2]);
+    let evaluator_zero_inputs = enc.encode_evaluator_inputs(&vec![0; num_inputs]);
+    let evaluator_one_inputs = enc.encode_evaluator_inputs(&vec![1; num_inputs]);
 
     println!("{}", serde_json::to_string(&garbler_inputs).unwrap());
     println!("{}", serde_json::to_string(&evaluator_zero_inputs).unwrap());
